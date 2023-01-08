@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "vite": "^4.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "twilio": "^3.84.0"
   }
 }
