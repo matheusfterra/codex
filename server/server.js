@@ -81,4 +81,3 @@ app.get("/",(req,res)=>{
     res.status(200).send("hello this is webhook setup");
 });
 
-app.listen(5000, () => console.log('AI server started on http://localhost:5000'))
