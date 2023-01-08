@@ -54,7 +54,7 @@ app.post("/webhook",(req,res)=>{ //i want some
 
                axios({
                    method:"POST",
-                   url:"https://graph.facebook.com/v13.0/"+phon_no_id+"/messages?access_token="+token,
+                   url:"https://graph.facebook.com/v15.0/"+phon_no_id+"/messages?access_token="+token,
                    data:{
                        messaging_product:"whatsapp",
                        to:from,
@@ -80,4 +80,3 @@ app.post("/webhook",(req,res)=>{ //i want some
 app.get("/",(req,res)=>{
     res.status(200).send("hello this is webhook setup");
 });
-
