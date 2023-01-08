@@ -1,49 +1,82 @@
-import express from 'express'
-import * as dotenv from 'dotenv'
-import cors from 'cors'
-import { Configuration, OpenAIApi } from 'openai'
+const express=require("express");
+const body_parser=require("body-parser");
+const axios=require("axios");
+require('dotenv').config();
 
-dotenv.config()
+const app=express().use(body_parser.json());
 
+const token=process.env.TOKEN;
+const mytoken=process.env.MYTOKEN;//prasath_token
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+app.listen(process.env.PORT,()=>{
+    console.log("webhook is listening");
 });
 
-const openai = new OpenAIApi(configuration);
+//to verify the callback url from dashboard side - cloud api side
+app.get("/webhook",(req,res)=>{
+   let mode=req.query["hub.mode"];
+   let challange=req.query["hub.challenge"];
+   let token=req.query["hub.verify_token"];
 
-const app = express()
-app.use(cors())
-app.use(express.json())
 
-app.get('/', async (req, res) => {
-  res.status(200).send({
-    message: 'Hello from CodeX!'
-  })
-})
+    if(mode && token){
 
-app.post('/', async (req, res) => {
-  try {
-    const prompt = req.body.prompt;
+        if(mode==="subscribe" && token===mytoken){
+            res.status(200).send(challange);
+        }else{
+            res.status(403);
+        }
 
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `${prompt}`,
-      temperature: 0, // Higher values means the model will take more risks.
-      max_tokens: 1000, // The maximum number of tokens to generate in the completion. Most models have a context length of 2048 tokens (except for the newest models, which support 4096).
-      top_p: 1, // alternative to sampling with temperature, called nucleus sampling
-      frequency_penalty: 0.5, // Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
-      presence_penalty: 0, // Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
-    });
+    }
 
-    res.status(200).send({
-      bot: response.data.choices[0].text
-    });
+});
 
-  } catch (error) {
-    console.error(error)
-    res.status(500).send(error || 'Something went wrong');
-  }
-})
+app.post("/webhook",(req,res)=>{ //i want some 
 
-app.listen(5000, () => console.log('AI server started on http://localhost:5000'))
+    let body_param=req.body;
+
+    console.log(JSON.stringify(body_param,null,2));
+
+    if(body_param.object){
+        console.log("inside body param");
+        if(body_param.entry && 
+            body_param.entry[0].changes && 
+            body_param.entry[0].changes[0].value.messages && 
+            body_param.entry[0].changes[0].value.messages[0]  
+            ){
+               let phon_no_id=body_param.entry[0].changes[0].value.metadata.phone_number_id;
+               let from = body_param.entry[0].changes[0].value.messages[0].from; 
+               let msg_body = body_param.entry[0].changes[0].value.messages[0].text.body;
+
+               console.log("phone number "+phon_no_id);
+               console.log("from "+from);
+               console.log("boady param "+msg_body);
+
+               axios({
+                   method:"POST",
+                   url:"https://graph.facebook.com/v13.0/"+phon_no_id+"/messages?access_token="+token,
+                   data:{
+                       messaging_product:"whatsapp",
+                       to:from,
+                       text:{
+                           body:"Hi.. I'm Prasath, your message is "+msg_body
+                       }
+                   },
+                   headers:{
+                       "Content-Type":"application/json"
+                   }
+
+               });
+
+               res.sendStatus(200);
+            }else{
+                res.sendStatus(404);
+            }
+
+    }
+
+});
+
+app.get("/",(req,res)=>{
+    res.status(200).send("hello this is webhook setup");
+});
