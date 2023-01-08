@@ -1,7 +1,7 @@
-const express=require("express");
-const body_parser=require("body-parser");
-const axios=require("axios");
-require('dotenv').config();
+import express from 'express'
+import body_parser from 'body-parser'
+import axios from 'axios'
+import * as dotenv from 'dotenv'
 
 const app=express().use(body_parser.json());
 
@@ -80,3 +80,5 @@ app.post("/webhook",(req,res)=>{ //i want some
 app.get("/",(req,res)=>{
     res.status(200).send("hello this is webhook setup");
 });
+
+app.listen(5000, () => console.log('AI server started on http://localhost:5000'))
